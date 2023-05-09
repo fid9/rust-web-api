@@ -1,20 +1,29 @@
 version: '3.3'
 
 services:
-  mysql:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=boot
-      - MYSQL_HOST=127.0.0.1
+  postgres:
+    image: "postgres:9"
     ports:
-      - 3306:3306
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_PASSWORD: supersecretpassword
+      PGDATA: /var/lib/postgresql/data/pgdata
 
   rocket:
     build: .
-    command: bash -c "cargo run"
-    links:
-      - mysql
-    environment:
-      - DATABASE_URL=mysql://root:boot@mysql/items
     ports:
-      - 6666:6666
+      - "3001:3001"
+    volumes:
+      - ./:/usr/src/app
+    working_dir: /usr/src/app
+    links:
+      - postgres
+    # diesel infer_schema macro gives warnings with this flag.
+    # environment:
+    #   - CARGO_INCREMENTAL=1
+    command: cargo watch -x run
+
+volumes:
+  pgdata: {}
